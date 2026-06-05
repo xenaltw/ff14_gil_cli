@@ -1,0 +1,14 @@
+from pathlib import Path
+
+APP_NAME = "ff14-gil-cli"
+DEFAULT_WORLD = "Leviathan"
+CACHE_DB_PATH = Path("data/cache.sqlite3")
+
+UNIVERSALIS_BASE_URL = "https://universalis.app/api/v2"
+
+CACHE_TTL_SECONDS = 1800
+DEFAULT_MIN_PROFIT = 5000
+DEFAULT_MIN_SALES_PER_DAY = 1.0
+DEFAULT_HISTORY_DAYS = 7
+DEFAULT_BATCH_SIZE = 50
+REQUEST_TIMEOUT = 20
