@@ -4,29 +4,26 @@ from typing import List, Optional
 
 @dataclass
 class Listing:
-    price_per_unit: int
+    price_per_unit: float
     quantity: int
     hq: bool = False
 
 
 @dataclass
 class SaleEntry:
-    price_per_unit: int
+    price_per_unit: float
     quantity: int
-    timestamp: int
     hq: bool = False
+    timestamp: Optional[int] = None
 
 
 @dataclass
-class MarketItemData:
+class MarketItem:
     item_id: int
-    world: str
-    listings: List[Listing] = field(default_factory=list)
-    recent_history: List[SaleEntry] = field(default_factory=list)
+    listings: list[Listing] = field(default_factory=list)
+    recent_sales: list[SaleEntry] = field(default_factory=list)
     current_average_price: Optional[float] = None
     regular_sale_velocity: Optional[float] = None
-    nq_sale_velocity: Optional[float] = None
-    hq_sale_velocity: Optional[float] = None
 
 
 @dataclass
@@ -50,9 +47,12 @@ class Recipe:
 class CraftOpportunity:
     item_id: int
     item_name: str
+    market_buy_price: float
     est_sell_price: float
-    craft_cost: float
-    gross_profit: float
+    craft_cost_buy_all: float
+    craft_cost_best: float
+    profit_buy_all: float
+    profit_best: float
     sales_per_day: float
     listing_count: int
     score: float
