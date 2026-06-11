@@ -1,0 +1,14 @@
+[Unit]
+Description=FF14 Gil Cache Refresh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=xenal
+WorkingDirectory=/home/xenal/python/ff14_gil_cli
+ExecStart=/usr/bin/python3 /home/xenal/python/ff14_gil_cli/main.py refresh --world "利維坦"
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

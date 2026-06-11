@@ -23,7 +23,7 @@ class CacheStore:
         """)
         self.conn.commit()
 
-    def get_market_json(self, world, item_id, ttl_seconds):
+    def get_market_entry(self, world, item_id, ttl_seconds):
         row = self.conn.execute(
             "SELECT payload, fetched_at FROM market_cache WHERE world = ? AND item_id = ?",
             (world, item_id)
@@ -33,10 +33,26 @@ class CacheStore:
             return None
 
         payload, fetched_at = row
-        if int(time.time()) - fetched_at > ttl_seconds:
+        now = int(time.time())
+        age_seconds = now - fetched_at
+        is_expired = age_seconds > ttl_seconds
+
+        return {
+            "payload": json.loads(payload),
+            "fetched_at": fetched_at,
+            "age_seconds": age_seconds,
+            "is_expired": is_expired,
+        }
+
+    def get_market_json(self, world, item_id, ttl_seconds, allow_stale=False):
+        entry = self.get_market_entry(world, item_id, ttl_seconds)
+        if entry is None:
             return None
 
-        return json.loads(payload)
+        if entry["is_expired"] and not allow_stale:
+            return None
+
+        return entry["payload"]
 
     def put_market_json(self, world, item_id, payload):
         self.conn.execute(

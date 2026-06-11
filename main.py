@@ -26,6 +26,8 @@ def build_parser():
 
     refresh_parser = subparsers.add_parser("refresh", help="Refresh cached market data")
     refresh_parser.add_argument("--world", default=DEFAULT_WORLD)
+    refresh_parser.add_argument("--limit-items", type=int, default=None, help="Only refresh the first N items for testing")
+
 
     return parser
 

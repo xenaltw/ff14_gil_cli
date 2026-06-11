@@ -2,11 +2,11 @@ from pathlib import Path
 
 APP_NAME = "ff14-gil-cli"
 DEFAULT_WORLD = "利維坦"
-CACHE_DB_PATH = Path("data/cache.sqlite3")
+CACHE_DB_PATH = Path("/home/xenal/python/ff14_gil_cli/data/cache.sqlite3")
 
 UNIVERSALIS_BASE_URL = "https://universalis.app/api/v2"
 
-CACHE_TTL_SECONDS = 1800
+CACHE_TTL_SECONDS = 3600
 DEFAULT_MIN_PROFIT = 500
 DEFAULT_MIN_SALES_PER_DAY = 1.0
 DEFAULT_HISTORY_DAYS = 7
