@@ -1,5 +1,6 @@
 from tabulate import tabulate
 from wcwidth import wcswidth
+from tabulate import tabulate
 
 
 def display_width(text: str) -> int:
@@ -96,3 +97,37 @@ def print_market_item_detail(data):
     print(f"Regular Sale Velocity: {data.regular_sale_velocity}")
     print(f"Listings: {len(data.listings)}")
     print(f"Recent History Count: {len(data.recent_history)}")
+
+
+def print_underpriced_deals_table(rows, limit=20):
+    table = []
+    for row in rows[:limit]:
+        table.append([
+            row.item_id,
+            row.item_name,
+            row.world_name,
+            int(row.lowest_listing_price),
+            int(row.target_world_median_price),
+            int(row.default_world_median_price) if row.default_world_median_price is not None else "-",
+            int(row.price_gap),
+            f"{row.price_ratio:.2f}",
+            round(row.sales_per_day, 2),
+            row.recent_sales_count,
+        ])
+
+    print(tabulate(
+        table,
+        headers=[
+            "Item ID",
+            "Item",
+            "Server",
+            "Lowest",
+            "Target Median",
+            "Default Median",
+            "Gap",
+            "Ratio",
+            "Sales/Day",
+            "Recent",
+        ],
+        tablefmt="github",
+    ))

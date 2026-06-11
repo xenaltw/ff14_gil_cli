@@ -7,6 +7,8 @@ class Listing:
     price_per_unit: float
     quantity: int
     hq: bool = False
+    world_name: Optional[str] = None
+    world_id: Optional[int] = None
 
 
 @dataclass
@@ -56,3 +58,21 @@ class CraftOpportunity:
     sales_per_day: float
     listing_count: int
     score: float
+
+@dataclass
+class CandidateItem:
+    item_id: int
+    item_name: str
+
+@dataclass
+class UnderpricedDeal:
+    item_id: int
+    item_name: str
+    world_name: str
+    lowest_listing_price: float
+    target_world_median_price: float
+    default_world_median_price: float | None
+    price_gap: float
+    price_ratio: float
+    sales_per_day: float
+    recent_sales_count: int

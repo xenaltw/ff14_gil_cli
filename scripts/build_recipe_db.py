@@ -8,7 +8,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_URL = "https://github.com/thewakingsands/ffxiv-datamining-tc.git"
 DEFAULT_REPO_DIR = Path("raw_data/ffxiv-datamining-tc")
 DEFAULT_OUT_DIR = Path("data")
@@ -71,9 +70,9 @@ def read_exd_csv_rows(csv_path: Path):
     with csv_path.open("r", encoding="utf-8-sig", newline="") as f:
         reader = csv.reader(f)
 
-        _row1 = next(reader)   # metadata index row
-        row2 = next(reader)    # semantic header row
-        _row3 = next(reader)   # type row
+        _row1 = next(reader)  # metadata index row
+        row2 = next(reader)   # semantic header row
+        _row3 = next(reader)  # type row
 
         dict_reader = csv.DictReader(f, fieldnames=row2)
         for row in dict_reader:
@@ -88,9 +87,16 @@ def load_items(item_csv_path: Path):
         if item_id <= 0:
             continue
 
+        name = (row.get("Name") or "").strip()
+        if not name:
+            continue
+
+        can_market = not parse_bool(row.get("IsUntradable"))
+
         items[item_id] = {
             "item_id": item_id,
-            "name": row.get("Name", "").strip(),
+            "name": name,
+            "can_market": can_market,
         }
 
     return items
@@ -104,7 +110,7 @@ def load_craft_types(craft_type_csv_path: Path):
         if craft_type_id <= 0:
             continue
 
-        craft_type_map[craft_type_id] = row.get("Name", "").strip()
+        craft_type_map[craft_type_id] = (row.get("Name") or "").strip()
 
     return craft_type_map
 
@@ -236,4 +242,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

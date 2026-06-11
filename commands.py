@@ -9,6 +9,14 @@ from tqdm import tqdm
 from datetime import datetime, UTC
 from refresh_status import write_refresh_status
 from output import fmt_num
+from market_deals import (
+    load_marketable_items,
+    build_high_value_candidates,
+    save_high_value_candidates,
+    load_high_value_candidates,
+    scan_underpriced_items,
+)
+from output import print_underpriced_deals_table
 
 
 def collect_required_item_ids(target_item_ids, recipe_map):
@@ -305,3 +313,92 @@ def log_info(msg: str):
         tqdm.write(msg)
     else:
         print(msg)
+
+
+def run_build_high_value_candidates(args):
+    started_at = time.time()
+
+    log_info("[STAGE] init cache/client")
+    cache = CacheStore()
+    client = UniversalisClient(cache=cache)
+
+    log_info("[STAGE] load all marketable items")
+    items = load_marketable_items()
+    log_info(f"[INFO] marketable items: {len(items)}")
+
+    if args.limit_items is not None and args.limit_items > 0:
+        items = items[:args.limit_items]
+        log_info(f"[INFO] limited items for testing: {len(items)}")
+
+    item_ids = [x.item_id for x in items]
+
+    log_info("[STAGE] fetch market data for default world")
+    market_map = client.get_market_data_bulk(
+        world=args.world,
+        item_ids=item_ids,
+        allow_fetch=True,
+        allow_stale=False,
+        with_meta=False,
+    )
+
+    log_info("[STAGE] build candidate snapshot")
+    rows = build_high_value_candidates(
+        items=items,
+        market_map=market_map,
+        min_recent_sales=args.min_recent_sales,
+        min_sales_per_day=args.min_sales_per_day,
+        min_median_price=args.min_median_price,
+    )
+
+    save_high_value_candidates(rows)
+    log_info(f"[INFO] candidates saved: {len(rows)}")
+    log_info(f"[DONE] built candidates in {time.time() - started_at:.2f}s")
+
+
+def run_scan_underpriced(args):
+    started_at = time.time()
+
+    log_info("[STAGE] init cache/client")
+    cache = CacheStore()
+    client = UniversalisClient(cache=cache)
+
+    log_info("[STAGE] load high value candidates")
+    candidates = load_high_value_candidates()
+    log_info(f"[INFO] candidate items: {len(candidates)}")
+
+    if args.limit_items is not None and args.limit_items > 0:
+        candidates = candidates[:args.limit_items]
+        log_info(f"[INFO] limited items for testing: {len(candidates)}")
+
+    item_ids = [x.item_id for x in candidates]
+
+    log_info("[STAGE] fetch default world history baseline")
+    default_world_market_map = client.get_market_data_bulk(
+        world=args.default_world,
+        item_ids=item_ids,
+        allow_fetch=True,
+        allow_stale=False,
+        with_meta=False,
+    )
+
+    log_info("[STAGE] fetch target world current listings")
+    target_world_market_map = client.get_market_data_bulk(
+        world=args.world,
+        item_ids=item_ids,
+        allow_fetch=True,
+        allow_stale=False,
+        with_meta=False,
+    )
+
+    log_info("[STAGE] analyze underpriced deals")
+    rows = scan_underpriced_items(
+        candidates=candidates,
+        default_world_market_map=default_world_market_map,
+        target_world_market_map=target_world_market_map,
+        min_recent_sales=args.min_recent_sales,
+        min_sales_per_day=args.min_sales_per_day,
+    )
+
+    log_info(f"[INFO] underpriced deals found: {len(rows)}")
+    print_underpriced_deals_table(rows, limit=args.limit)
+    log_info(f"[DONE] scanned underpriced deals in {time.time() - started_at:.2f}s")

@@ -217,6 +217,8 @@ class UniversalisClient:
                     price_per_unit=float(price),
                     quantity=int(x.get("quantity", 0)),
                     hq=bool(x.get("hq", False)),
+                    world_name=x.get("worldName"),
+                    world_id=x.get("worldID"),
                 )
             )
 
@@ -253,6 +255,8 @@ class UniversalisClient:
                 else None
             ),
         )
+
+
     def _fetch_batch_raw(self, world, batch):
         url = self._build_url(world, batch)
         resp = self.session.get(url, timeout=(3, REQUEST_TIMEOUT))
