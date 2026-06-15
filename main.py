@@ -26,6 +26,7 @@ def build_parser():
     scan_parser.add_argument("--limit-recipes", type=int, default=DEFAULT_LIMIT_RECIPES)
     scan_parser.add_argument("--item-ids", nargs="+", type=int, default=None)
     scan_parser.add_argument("--debug-item-id", type=int, default=None)
+    scan_parser.add_argument("--max-listings", type=int, default=DEAFULT_MAX_LISTINGS)
 
     item_parser = subparsers.add_parser("item", help="Inspect one item")
     item_parser.add_argument("item_id", type=int)

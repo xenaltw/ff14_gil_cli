@@ -1,42 +1,198 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FF14 Gil Scanner</title>
-  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 32px;
+      color: #111827;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 24px 0;
+      font-size: 40px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .field input {
+      height: 42px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 16px;
+      background: #fff;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+
+    button {
+      height: 42px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #5b5b5b;
+      color: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    th {
+      background: #e5e7eb;
+      font-size: 16px;
+    }
+
+    .status-box {
+      margin-top: 28px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .stats-box {
+      margin: 20px 0;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .stats-box ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .form-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 16px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
+  </style>
 </head>
 <body>
-  <main class="container">
+  <div class="container">
     <h1>FF14市場搜尋</h1>
 
-    <form class="filters" method="get" action="/">
-      <label>
-        伺服器
-        <input type="text" name="world" value="{{ world }}">
-      </label>
-      <label>
-        最低預期收益
-        <input type="number" step="1" name="min_profit" value="{{ min_profit }}">
-      </label>
-      <label>
-        最低每日銷量
-        <input type="number" step="0.1" name="min_sales_per_day" value="{{ min_sales_per_day }}">
-      </label>
-      <label>
-        排名數量
-        <input type="number" step="1" name="limit" value="{{ limit }}">
-      </label>
-      <label>
-        配方數量限制
-        <input type="number" step="1" name="limit_recipes" value="{{ limit_recipes }}">
-      </label>
-      <button type="submit">查詢</button>
-    </form>
+    <form method="get" action="/">
+      <div class="form-grid">
+        <div class="field">
+          <label for="world">伺服器</label>
+          <input id="world" type="text" name="world" value="{{ world }}">
+        </div>
 
-    <form method="post" action="/refresh" class="refresh-form">
-      <input type="hidden" name="world" value="{{ world }}">
-      <button type="submit" class="secondary">手動 Refresh Cache</button>
+        <div class="field">
+          <label for="min_profit">最低預期收益</label>
+          <input id="min_profit" type="number" step="1" name="min_profit" value="{{ min_profit }}">
+        </div>
+
+        <div class="field">
+          <label for="min_sales_per_day">最低每日銷量</label>
+          <input id="min_sales_per_day" type="number" step="0.1" name="min_sales_per_day" value="{{ min_sales_per_day }}">
+        </div>
+
+        <div class="field">
+          <label for="limit">排名數量</label>
+          <input id="limit" type="number" step="1" name="limit" value="{{ limit }}">
+        </div>
+
+        <div class="field">
+          <label for="max_listings">最高Listings數量</label>
+          <input
+            id="max_listings"
+            type="number"
+            step="1"
+            name="max_listings"
+            value="{{ max_listings if max_listings is not none else '' }}"
+          >
+        </div>
+
+        <div class="field">
+          <label for="limit_recipes">配方數量限制</label>
+          <input id="limit_recipes" type="number" step="1" name="limit_recipes" value="{{ limit_recipes }}">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" type="submit">查詢</button>
+      </div>
     </form>
 
     <table>
@@ -61,64 +217,88 @@
         {% endfor %}
       </tbody>
     </table>
-  </main>
-  <section class="status-panel">
-    <h2>Cache Refresh Status</h2>
-    <div id="refresh-status">載入中...</div>
-  </section>
+
+    <div class="stats-box">
+      <h2>Stats</h2>
+      <ul>
+        <li>Target recipes: {{ stats.target_recipes }}</li>
+        <li>Required item ids: {{ stats.required_item_ids }}</li>
+        <li>Cached market items: {{ stats.cached_market_items }}</li>
+        <li>Fresh market items: {{ stats.fresh_market_items }}</li>
+        <li>Stale market items: {{ stats.stale_market_items }}</li>
+        <li>Opportunities: {{ stats.opportunities }}</li>
+        <li>Ranked: {{ stats.ranked }}</li>
+        <li>Negative infinity profit: {{ stats.neg_inf_profit }}</li>
+        <li>NaN sales: {{ stats.nan_sales }}</li>
+        <li>Pass profit: {{ stats.pass_profit }}</li>
+        <li>Pass sales: {{ stats.pass_sales }}</li>
+        <li>Pass listings: {{ stats.pass_listings }}</li>
+        <li>Pass both: {{ stats.pass_both }}</li>
+      </ul>
+    </div>
+
+    <div class="status-box">
+      <h2>Cache Refresh Status</h2>
+      <div id="refresh-status">載入中...</div>
+    </div>
+
+    <form method="post" action="/refresh" class="actions">
+      <input type="hidden" name="world" value="{{ world }}">
+      <button class="btn-secondary" type="submit">手動 Refresh Cache</button>
+    </form>
+  </div>
+
   <script>
-  function formatUtcPlus8(input) {
-    if (!input || input === '-') return '-';
+    function formatUtcPlus8(input) {
+      if (!input || input === '-') return '-';
+      const date = new Date(input);
+      if (Number.isNaN(date.getTime())) return input;
 
-    const date = new Date(input);
-    if (Number.isNaN(date.getTime())) return input;
+      const utc8 = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+      const yyyy = utc8.getUTCFullYear();
+      const mm = String(utc8.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(utc8.getUTCDate()).padStart(2, '0');
+      const hh = String(utc8.getUTCHours()).padStart(2, '0');
+      const mi = String(utc8.getUTCMinutes()).padStart(2, '0');
+      const ss = String(utc8.getUTCSeconds()).padStart(2, '0');
 
-    const utc8 = new Date(date.getTime() + 8 * 60 * 60 * 1000);
-
-    const yyyy = utc8.getUTCFullYear();
-    const mm = String(utc8.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(utc8.getUTCDate()).padStart(2, '0');
-    const hh = String(utc8.getUTCHours()).padStart(2, '0');
-    const mi = String(utc8.getUTCMinutes()).padStart(2, '0');
-    const ss = String(utc8.getUTCSeconds()).padStart(2, '0');
-
-    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
-  }
-  async function loadRefreshStatus() {
-    try {
-      const res = await fetch('/api/refresh-status');
-      const data = await res.json();
-
-      const status = data.status ?? 'unknown';
-      const world = data.world ?? '-';
-      const done = data.done_items ?? 0;
-      const total = data.total_items ?? 0;
-      const progress = data.progress ?? 0;
-      const updatedAt = formatUtcPlus8(data.updated_at);
-      const message = data.last_message ?? '';
-      const error = data.error ?? '';
-
-      let html = `
-        <p><strong>Status:</strong> ${status}</p>
-        <p><strong>World:</strong> ${world}</p>
-        <p><strong>Progress:</strong> ${done}/${total} (${progress}%)</p>
-        <p><strong>Updated:</strong> ${updatedAt}</p>
-        <p><strong>Message:</strong> ${message}</p>
-      `;
-
-      if (error) {
-        html += `<p><strong>Error:</strong> ${error}</p>`;
-      }
-
-      document.getElementById('refresh-status').innerHTML = html;
-    } catch (err) {
-      document.getElementById('refresh-status').innerHTML =
-        `<p>讀取 refresh 狀態失敗: ${err}</p>`;
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
-  }
 
-  loadRefreshStatus();
-  setInterval(loadRefreshStatus, 5000);
+    async function loadRefreshStatus() {
+      try {
+        const res = await fetch('/api/refresh-status');
+        const data = await res.json();
+
+        const status = data.status ?? 'unknown';
+        const world = data.world ?? '-';
+        const done = data.done_items ?? 0;
+        const total = data.total_items ?? 0;
+        const progress = data.progress ?? 0;
+        const updatedAt = formatUtcPlus8(data.updated_at);
+        const message = data.last_message ?? '';
+        const error = data.error ?? '';
+
+        let html = `
+          <p><strong>Status:</strong> ${status}</p>
+          <p><strong>World:</strong> ${world}</p>
+          <p><strong>Progress:</strong> ${done}/${total} (${progress}%)</p>
+          <p><strong>Updated:</strong> ${updatedAt}</p>
+          <p><strong>Message:</strong> ${message}</p>
+        `;
+
+        if (error) {
+          html += `<p><strong>Error:</strong> ${error}</p>`;
+        }
+
+        document.getElementById('refresh-status').innerHTML = html;
+      } catch (err) {
+        document.getElementById('refresh-status').innerHTML = `<p>讀取 refresh 狀態失敗: ${err}</p>`;
+      }
+    }
+
+    loadRefreshStatus();
+    setInterval(loadRefreshStatus, 5000);
   </script>
 </body>
 </html>

@@ -112,6 +112,7 @@ def run_scan(args):
         opportunities,
         min_profit=args.min_profit,
         min_sales_per_day=args.min_sales_per_day,
+        max_listings=args.max_listings,
     )
 
     log_info("[STAGE] rank opportunities")
@@ -119,8 +120,12 @@ def run_scan(args):
         opportunities,
         min_profit=args.min_profit,
         min_sales_per_day=args.min_sales_per_day,
+        max_listings=args.max_listings,
         limit=args.limit,
     )
+
+    if args.max_listings is not None:
+        ranked = [x for x in ranked if x.listing_count <= args.max_listings]
 
     log_info("[STAGE] print result table")
     print_opportunities_table(ranked)

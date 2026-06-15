@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from types import SimpleNamespace
 
 from fastapi import FastAPI, Form, Query, Request
@@ -7,26 +8,25 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from cache_store import CacheStore
+from commands import (
+    collect_required_item_ids,
+    dedupe_recipes_by_item_id,
+    run_refresh,
+)
 from config import (
-    DEFAULT_MIN_PROFIT,
-    DEFAULT_MIN_SALES_PER_DAY,
-    DEFAULT_WORLD,
     DEFAULT_LIMIT,
     DEFAULT_LIMIT_RECIPES,
+    DEFAULT_MIN_PROFIT,
+    DEFAULT_MAX_LISTINGS,
+    DEFAULT_MIN_SALES_PER_DAY,
+    DEFAULT_WORLD,
 )
-from commands import (
-    run_refresh,
-    dedupe_recipes_by_item_id,
-    collect_required_item_ids,
-)
-from cache_store import CacheStore
-from universalis_client import UniversalisClient
-from recipe_source import load_recipes
 from profit_engine import analyze_opportunities
 from ranker import rank_opportunities
+from recipe_source import load_recipes
 from refresh_status import read_refresh_status
-import math
-
+from universalis_client import UniversalisClient
 
 app = FastAPI(title="FF14 Gil CLI Web")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -38,6 +38,7 @@ def scan_data(
     min_profit: float,
     min_sales_per_day: float,
     limit: int,
+    max_listings: int | None = None,
     limit_recipes: int | None = None,
     item_ids: list[int] | None = None,
 ):
@@ -49,7 +50,6 @@ def scan_data(
     full_recipe_map = {r.item_id: r for r in all_recipes}
 
     target_recipes = all_recipes
-
     if item_ids:
         wanted = set(item_ids)
         target_recipes = [r for r in target_recipes if r.item_id in wanted]
@@ -69,7 +69,6 @@ def scan_data(
     )
 
     market_map = {item_id: x["payload"] for item_id, x in market_entries.items()}
-
     market_meta = {
         item_id: {
             "fetched_at": x["fetched_at"],
@@ -89,6 +88,7 @@ def scan_data(
         opportunities,
         min_profit=min_profit,
         min_sales_per_day=min_sales_per_day,
+        max_listings=max_listings,
         limit=limit,
     )
 
@@ -111,24 +111,32 @@ def scan_data(
         "opportunities": len(opportunities),
         "ranked": len(ranked),
         "neg_inf_profit": sum(
-            1 for x in opportunities
+            1
+            for x in opportunities
             if math.isinf(x.profit_buy_all) and x.profit_buy_all < 0
         ),
         "nan_sales": sum(
-            1 for x in opportunities
+            1
+            for x in opportunities
             if isinstance(x.sales_per_day, float) and math.isnan(x.sales_per_day)
         ),
         "pass_profit": sum(
-            1 for x in opportunities
-            if x.profit_buy_all >= min_profit
+            1 for x in opportunities if x.profit_buy_all >= min_profit
         ),
         "pass_sales": sum(
-            1 for x in opportunities
-            if x.sales_per_day >= min_sales_per_day
+            1 for x in opportunities if x.sales_per_day >= min_sales_per_day
+        ),
+        "pass_listings": sum(
+            1
+            for x in opportunities
+            if max_listings is None or max_listings == 0 or x.listing_count <= max_listings
         ),
         "pass_both": sum(
-            1 for x in opportunities
-            if x.profit_buy_all >= min_profit and x.sales_per_day >= min_sales_per_day
+            1
+            for x in opportunities
+            if x.profit_buy_all >= min_profit
+            and x.sales_per_day >= min_sales_per_day
+            and (max_listings is None or max_listings == 0 or x.listing_count <= max_listings)
         ),
     }
 
@@ -136,6 +144,7 @@ def scan_data(
         "rows": ranked,
         "debug_rows": debug_rows,
         "stats": stats,
+        "market_meta": market_meta,
     }
 
 
@@ -146,6 +155,7 @@ def index(
     min_profit: float = Query(DEFAULT_MIN_PROFIT),
     min_sales_per_day: float = Query(DEFAULT_MIN_SALES_PER_DAY),
     limit: int = Query(DEFAULT_LIMIT),
+    max_listings: int | None = Query(DEFAULT_MAX_LISTINGS),
     limit_recipes: int | None = Query(DEFAULT_LIMIT_RECIPES),
 ):
     result = scan_data(
@@ -153,6 +163,7 @@ def index(
         min_profit=min_profit,
         min_sales_per_day=min_sales_per_day,
         limit=limit,
+        max_listings=max_listings,
         limit_recipes=limit_recipes,
     )
 
@@ -172,6 +183,7 @@ def index(
             "min_profit": min_profit,
             "min_sales_per_day": min_sales_per_day,
             "limit": limit,
+            "max_listings": max_listings,
             "limit_recipes": limit_recipes,
         },
     )
@@ -183,9 +195,18 @@ def api_scan(
     min_profit: float = Query(DEFAULT_MIN_PROFIT),
     min_sales_per_day: float = Query(DEFAULT_MIN_SALES_PER_DAY),
     limit: int = Query(DEFAULT_LIMIT),
+    max_listings: int | None = Query(DEFAULT_MAX_LISTINGS),
     limit_recipes: int | None = Query(DEFAULT_LIMIT_RECIPES),
 ):
-    result = scan_data(...)
+    result = scan_data(
+        world=world,
+        min_profit=min_profit,
+        min_sales_per_day=min_sales_per_day,
+        limit=limit,
+        max_listings=max_listings,
+        limit_recipes=limit_recipes,
+    )
+
     rows = result["rows"]
 
     return JSONResponse(
@@ -216,6 +237,7 @@ def refresh_now(world: str = Form(DEFAULT_WORLD)):
     args = SimpleNamespace(world=world)
     run_refresh(args)
     return RedirectResponse(url=f"/?world={world}", status_code=303)
+
 
 @app.get("/api/refresh-status")
 def api_refresh_status():
