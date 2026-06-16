@@ -174,7 +174,7 @@
         </div>
 
         <div class="field">
-          <label for="max_listings">最高Listings數量</label>
+          <label for="max_listings">最高上架數量</label>
           <input
             id="max_listings"
             type="number"
@@ -183,15 +183,14 @@
             value="{{ max_listings if max_listings is not none else '' }}"
           >
         </div>
-
+<!--
         <div class="field">
           <label for="limit_recipes">配方數量限制</label>
           <input id="limit_recipes" type="number" step="1" name="limit_recipes" value="{{ limit_recipes }}">
+        </div>-->
+        <div class="actions">
+          <button class="btn-primary" type="submit">查詢</button>
         </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn-primary" type="submit">查詢</button>
       </div>
     </form>
 

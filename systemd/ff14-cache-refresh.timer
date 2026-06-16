@@ -1,9 +1,9 @@
 [Unit]
-Description=Run FF14 cache refresh every 60 minutes
+Description=Run FF14 cache refresh every 120 minutes
 
 [Timer]
 OnBootSec=2min
-OnUnitActiveSec=60min
+OnUnitActiveSec=120min
 Unit=ff14-cache-refresh.service
 
 [Install]

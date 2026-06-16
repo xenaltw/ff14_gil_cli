@@ -1,6 +1,6 @@
 import argparse
 
-from config import DEFAULT_MIN_PROFIT, DEFAULT_MIN_SALES_PER_DAY, DEFAULT_WORLD, DEFAULT_LIMIT, DEFAULT_LIMIT_RECIPES
+from config import DEFAULT_MIN_PROFIT, DEFAULT_MIN_SALES_PER_DAY, DEFAULT_WORLD, DEFAULT_LIMIT, DEFAULT_MAX_LISTINGS, DEFAULT_LIMIT_RECIPES
 from commands import run_scan, run_item, run_refresh
 from commands import (
     run_scan,
@@ -26,7 +26,7 @@ def build_parser():
     scan_parser.add_argument("--limit-recipes", type=int, default=DEFAULT_LIMIT_RECIPES)
     scan_parser.add_argument("--item-ids", nargs="+", type=int, default=None)
     scan_parser.add_argument("--debug-item-id", type=int, default=None)
-    scan_parser.add_argument("--max-listings", type=int, default=DEAFULT_MAX_LISTINGS)
+    scan_parser.add_argument("--max-listings", type=int, default=DEFAULT_MAX_LISTINGS)
 
     item_parser = subparsers.add_parser("item", help="Inspect one item")
     item_parser.add_argument("item_id", type=int)
